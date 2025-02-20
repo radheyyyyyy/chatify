@@ -1,13 +1,34 @@
 const {Router} = require("express");
 const {PrismaClient} = require("@prisma/client");
 const jwt = require("jsonwebtoken");
+const z=require("zod")
 const {SECRET_KEY} = require("../config");
 const {sendMail} = require("../nodemailer/nodemailer");
 const router = new Router();
 const prisma=new PrismaClient();
+const signupSchema=z.object({
+        email:z.string().email(),
+        password:z.string().min(8),
+        firstName:z.string().min(2),
+        lastName:z.string().min(2)
+})
+const loginSchema=z.object({
+        email:z.string().email(),
+        password:z.string().min(8),
+})
 router.post("/signup",async (req, res) => {
         const {firstName, lastName, email, password} = req.body;
+        if(signupSchema.safeParse({
+                firstName:firstName,
+                lastName:lastName,
+                email:email,
+                password:password
+        }).success){
         try {
+                const resp=await prisma.users.findUnique({
+                        where:{email:email}
+                })
+                if(!resp){
                 await prisma.users.create({
                 data:{
                         firstName,
@@ -19,17 +40,32 @@ router.post("/signup",async (req, res) => {
                 await sendMail(email)
                 res.status(201).json({
                 msg:"verify_first"
-                })
+                })}
+                else {
+                        res.json({
+                                msg:"login_"
+                        })
+                }
         }
         catch(err){
                 res.status(500).json({
-                        msg:"database is not online right now"
+                        msg:"database is not online right now",
+                        err:err
                 })
         }
-        })
+        }
+        else {
+                res.json({
+                        msg:"invalid_inputs"
+                })
+        }
+}
+
+)
 
 router.post("/login",async (req, res) => {
         const {email, password} = req.body;
+        if(loginSchema.safeParse({email:email, password:password}).success){
         let resp=await prisma.users.findUnique({
                 where:{email}
         })
@@ -56,6 +92,11 @@ router.post("/login",async (req, res) => {
         else {
                 res.json({
                         msg:"signup_first"
+                })
+        }}
+        else {
+                res.json({
+                        msg:"invalid_inputs"
                 })
         }
 })
