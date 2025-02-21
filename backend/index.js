@@ -22,7 +22,7 @@ app.use((err,req,res,next)=>{
 
 //WEBSOCKET LOGIC
 const onlineUsers=new Map();
-let i=0
+
 const wss=new WebSocketServer({server:httpServer})
 wss.on("connection", (ws) => {
     console.log("new_user_connected")
