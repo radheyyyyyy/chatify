@@ -1,6 +1,7 @@
 const {Router} = require("express");
 const {PrismaClient} = require("@prisma/client");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const z=require("zod")
 const {SECRET_KEY} = require("../config");
 const {sendMail} = require("../nodemailer/nodemailer");
@@ -18,6 +19,7 @@ const loginSchema=z.object({
 })
 router.post("/signup",async (req, res) => {
         const {firstName, lastName, email, password} = req.body;
+        const hashedPassword=await bcrypt.hash(password, 12);
         if(signupSchema.safeParse({
                 firstName:firstName,
                 lastName:lastName,
@@ -34,7 +36,7 @@ router.post("/signup",async (req, res) => {
                         firstName,
                         lastName,
                         email,
-                        password
+                        password:hashedPassword
                 }
                                         })
                 await sendMail(email)
@@ -60,7 +62,6 @@ router.post("/signup",async (req, res) => {
                 })
         }
 }
-
 )
 
 router.post("/login",async (req, res) => {
@@ -71,7 +72,8 @@ router.post("/login",async (req, res) => {
         })
         if(resp.email===email){
                 if(resp.isVerified){
-                if(resp.password===password){
+                const passwordMatch=await bcrypt.compare(password,resp.password)
+                if(passwordMatch){
                 res.status(200).json({
                         msg:"success_login"
                 })}
