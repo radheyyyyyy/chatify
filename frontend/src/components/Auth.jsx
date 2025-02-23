@@ -13,9 +13,11 @@ export const Auth = ({ type }) => {
     const confirmpass = useRef();
     const navigate = useNavigate();
     return (
-        <div className="flex h-screen w-screen justify-center items-center">
-            <div>
-                <h1 className="mb-5 text-center mr-2 text-2xl">{type == "signup" ? "Sign Up" : "Sign In"}</h1>
+        <div className="flex h-screen w-screen justify-center items-center bg-gradient-to-br from-blue-500 to-purple-600">
+            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4">
+                <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
+                    {type == "signup" ? "Sign Up" : "Sign In"}
+                </h1>
                 {type == "signup" && <Input type="text" placeholder="First Name" reference={firstName} />}
                 {type == "signup" && <Input type="text" placeholder="Last Name" reference={lastName} />}
                 <Input type="email" placeholder="Email" reference={email} />
@@ -43,6 +45,7 @@ export const Auth = ({ type }) => {
                     />
                 ) : (
                     <Button
+                        variant="large"
                         text="Sign In"
                         onClick={async () => {
                             const response = await axios.post(`${BACKEND_URL}/login`, {
@@ -57,8 +60,10 @@ export const Auth = ({ type }) => {
                                 return;
                             }
                             const token = response.data.token;
+                            console.log(token);
+                            
                             localStorage.setItem("token", token);
-                            alert(token)
+                            navigate("/chat");
                         }}
                     />
                 )}
