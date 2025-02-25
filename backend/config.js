@@ -1,8 +1,8 @@
 const PORT= 3000;
 const SECRET_KEY="fewoygf ewfgewufgewoewugewufwe re brwthrwwerthrwtbhtrutrburtuu";
-const LOGIN_SECRET="ewibvewyewgr ieugyrgiewctuegtiewti eygtqetuqewptgqewto gweyg"
+const JWT_SECRET="tracert123"
 module.exports={
     PORT,
     SECRET_KEY,
-    LOGIN_SECRET
+    JWT_SECRET
 }
