@@ -1,9 +1,12 @@
 const express=require("express");
 const {router} = require("./Routers/mainRouter");
+const {PrismaClient}=require("@prisma/client")
+const cors=require("cors");
 const {PORT} = require("./config");
 const {WebSocketServer} = require("ws");
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 //route to "http://localhost:3000/chatify/..."
 app.use("/chatify",router)
@@ -22,14 +25,14 @@ app.use((err,req,res,next)=>{
 
 //WEBSOCKET LOGIC
 const onlineUsers=new Map();
-
-const wss=new WebSocketServer({server:httpServer})
+const prisma=new PrismaClient();
+const wss=new WebSocketServer({server:httpServer,path:"/chatify/chat"})
 wss.on("connection", (ws) => {
     console.log("new_user_connected")
     ws.on("error", (err) => {
         console.error("Websocket error: "+err);
     })
-    ws.on("message", (msg) => {
+    ws.on("message", async (msg) => {
 
         const data=JSON.parse(msg);
 
@@ -43,6 +46,14 @@ wss.on("connection", (ws) => {
                 const toUser=onlineUsers.get(data.toUserId);
                 const message=data.message;
                 toUser.send(message);
+                console.log(ws)
+                await prisma.chats.create({
+                    data:{
+                        fromUser:data.fromUserId,
+                        toUser:data.toUserId,
+                        message:message
+                    }
+                })
             }
             else{
                 ws.send(JSON.stringify({msg:"user_not_online"}))

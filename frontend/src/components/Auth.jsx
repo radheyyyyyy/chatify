@@ -15,26 +15,32 @@ export const Auth = ({ type }) => {
     return (
         <div className="flex h-screen w-screen justify-center items-center">
             <div>
-                <h1 className="mb-5 text-center mr-2 text-2xl">{type == "signup" ? "Sign Up" : "Sign In"}</h1>
-                {type == "signup" && <Input type="text" placeholder="First Name" reference={firstName} />}
-                {type == "signup" && <Input type="text" placeholder="Last Name" reference={lastName} />}
+                <h1 className="mb-5 text-center mr-2 text-2xl">{type === "signup" ? "Sign Up" : "Sign In"}</h1>
+                {type === "signup" && <Input type="text" placeholder="First Name" reference={firstName} />}
+                {type === "signup" && <Input type="text" placeholder="Last Name" reference={lastName} />}
                 <Input type="email" placeholder="Email" reference={email} />
                 <Input type="password" placeholder="Password" reference={password} />
-                {type == "signup" && <Input type="password" placeholder="Confirm Password" reference={confirmpass} />}
-                {type == "signup" ? (
+                {type === "signup" && <Input type="password" placeholder="Confirm Password" reference={confirmpass} />}
+                {type === "signup" ? (
                     <Button
                         text="Sign Up"
                         onClick={async () => {
                             if (confirmpass.current.value === password.current.value) {
                                 const response = await axios.post(`${BACKEND_URL}/signup`, {
-                                    firstName: firstName.current.value,
-                                    lastName: lastName.current.value,
-                                    email: email.current.value,
-                                    password: password.current.value,
+                                    firstName: firstName.current.value.trim(),
+                                    lastName: lastName.current.value.trim(),
+                                    email: email.current.value.trim(),
+                                    password: password.current.value.trim(),
                                 });
-                                if (response.status == "201") {
+                                if (response.data.msg === "verify_first") {
                                     alert(`Email Verification Link is sent on email ${email.current.value}`);
                                     navigate("/signin");
+                                }
+                                else if(response.data.msg === "invalid_inputs"){
+                                    alert("Please enter valid inputs");
+                                }
+                                else {
+                                    alert("Server is under maintenance")
                                 }
                             } else {
                                 alert("Password does not match");
@@ -46,19 +52,27 @@ export const Auth = ({ type }) => {
                         text="Sign In"
                         onClick={async () => {
                             const response = await axios.post(`${BACKEND_URL}/login`, {
-                                email: email.current.value,
-                                password: password.current.value,
+                                email: email.current.value.trim(),
+                                password: password.current.value.trim(),
                             });
-                            if (response.data.message == "verify_first") {
-                                alert("Please Verify the email");
+                            if (response.data.msg === "verify_first") {
+                                alert("Please verify your email");
                                 return;
-                            } else if (response.data.message == "incorrect_password") {
+                            }
+                            else if (response.data.msg=== "invalid_inputs"){
+                                alert("Please enter valid inputs");
+                            }
+                            else if(response.data.msg==="signup_first"){
+                                alert("Please sign up first");
+                                navigate("/signup");
+                            }
+                            else if (response.data.msg=== "incorrect_password") {
                                 alert("Invalid Credentials");
                                 return;
                             }
                             const token = response.data.token;
                             localStorage.setItem("token", token);
-                            alert(token)
+                            navigate("/")
                         }}
                     />
                 )}

@@ -1,9 +1,9 @@
 const {Router} = require("express");
-const {PrismaClient} = require("@prisma/client");
+const {PrismaClient}=require("@prisma/client");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const z=require("zod")
-const {SECRET_KEY} = require("../config");
+const {SECRET_KEY, LOGIN_SECRET} = require("../config");
 const {sendMail} = require("../nodemailer/nodemailer");
 const router = new Router();
 const prisma=new PrismaClient();
@@ -51,7 +51,7 @@ router.post("/signup",async (req, res) => {
         }
         catch(err){
                 res.status(500).json({
-                        msg:"database is not online right now",
+                        msg:"database_error",
                         err:err
                 })
         }
@@ -74,8 +74,13 @@ router.post("/login",async (req, res) => {
                 if(resp.isVerified){
                 const passwordMatch=await bcrypt.compare(password,resp.password)
                 if(passwordMatch){
+                const token=jwt.sign({
+                        email:resp.email,
+                        time:new Date().getTime(),
+                },LOGIN_SECRET)
                 res.status(200).json({
-                        msg:"success_login"
+                        msg:"success_login",
+                        token:token
                 })}
                 else {
                         res.status(200).json({

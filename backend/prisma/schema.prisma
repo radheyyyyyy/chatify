@@ -15,3 +15,12 @@ model Users {
   lastName   String
   isVerified Boolean @default(false)
 }
+
+model chats {
+  id       Int    @id @default(autoincrement())
+  fromUser String
+  toUser   String
+
+  message String
+  time    DateTime @default(now())
+}
