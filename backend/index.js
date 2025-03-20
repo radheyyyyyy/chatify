@@ -4,8 +4,9 @@ const { PORT, JWT_SECRET } = require("./config");
 const { WebSocketServer } = require("ws");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
+const {PrismaClient} = require("@prisma/client");
 const app = express();
-
+const prisma=new PrismaClient();
 app.use(express.json());
 app.use(cors());
 //route to "http://localhost:3000/chatify/..."
@@ -27,7 +28,6 @@ const onlineUsers = new Map();
 
 const wss = new WebSocketServer({ server: httpServer });
 wss.on("connection", (ws) => {
-    console.log("new_user_connected");
     ws.on("error", (err) => {
         console.error("Websocket error: " + err);
     });
@@ -36,28 +36,43 @@ wss.on("connection", (ws) => {
 
         if (data.type === "register") {
             try {
-                const { email } = jwt.verify(data.userid, JWT_SECRET);
+                const email=jwt.decode(data.userid);
+                jwt.verify(data.userid, JWT_SECRET);
                 if (!email) return;
-                ws.id = email;
-                onlineUsers.set(email, ws);
-                console.log([...onlineUsers.keys()]);
-                
+                ws.id = email.email;
+                onlineUsers.set(email.email, ws);
+                console.log(onlineUsers);
+                if(onlineUsers.has(data.toUserId)){
+                    ws.send(JSON.stringify({type:"active",user:"online"}))
+                }
+                else {
+                    ws.send(JSON.stringify({type:"active",user:"Offline"}))
+                }
+
                 
             } catch (error) {
                 console.log(error);
-                msg.send("jwt failed");
-                return;
+                ws.send("jwt failed");
             }
         } else if (data.type === "send") {
+            const fromUserId=jwt.decode(data.fromUserId).email;
             if (data.toUserId && data.message) {
-                if (onlineUsers.has(data.toUserId)) {
-                    const toUser = onlineUsers.get(data.toUserId);
-                    
+                if (onlineUsers.has(data.toUserId.email)) {
+                    const toUser = onlineUsers.get(data.toUserId.email);
                     const message = data.message;
-                    toUser.send(JSON.stringify({ msg: message }));
+                    toUser.send(JSON.stringify({ type:"reply",msg: message }));
                 } else {
-                    ws.send(JSON.stringify({ msg: "user_not_online" }));
+                    ws.send(JSON.stringify({ type:"active",msg: "user_not_online" }));
                 }
+                prisma.chats.create({
+                    data:{
+                        fromUser:fromUserId,
+                        toUser:data.toUserId.email,
+                        message:data.message
+                    }
+                }).then(()=>{
+                    console.log("chat stored");
+                })
             } else {
                 ws.send(JSON.stringify({ msg: "invalid_input" }));
             }
@@ -66,5 +81,4 @@ wss.on("connection", (ws) => {
     ws.on("close", () => {
         onlineUsers.delete(ws.id);
     });
-    ws.send("connected");
 });

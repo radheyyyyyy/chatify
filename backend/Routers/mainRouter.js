@@ -32,7 +32,6 @@ router.post("/signup", async (req, res) => {
             const resp = await prisma.users.findUnique({
                 where: { email: email },
             });
-            console.log(resp);
             if (!resp) {
                 await prisma.users.create({
                     data: {
@@ -70,7 +69,8 @@ router.post("/login", async (req, res) => {
         let resp = await prisma.users.findUnique({
             where: { email },
         });
-        if (resp.email === email) {
+        console.log(resp)
+        if (resp.email) {
             if (resp.isVerified) {
                 const passwordMatch = await bcrypt.compare(password, resp.password);
                 if (passwordMatch) {
@@ -133,6 +133,41 @@ router.get("/verify", async (req, res) => {
         });
     }
 });
+
+router.get("/users",async (req,res)=>{
+   const users= await prisma.users.findMany({select:{firstName:true,lastName:true,email:true}});
+   res.status(200).json({
+       users:users
+   })
+})
+router.post("/search",async (req,res)=>{
+    const {data}=req.body;
+    const result=await prisma.users.findMany({
+        where:{
+            OR:[
+                {firstName:{
+                contains:data,
+                mode:"insensitive"
+            }},
+                {
+                    lastName:{
+                        contains:data,
+                        mode:"insensitive"
+                    }
+                }
+            ]
+        },
+        select:{
+            firstName:true,
+            lastName:true,
+            email:true
+        }
+    })
+    console.log(result)
+    res.json({
+        result:result
+    })
+})
 
 module.exports = {
     router,

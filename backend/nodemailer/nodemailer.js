@@ -8,8 +8,10 @@ const auth=nodemailer.createTransport({
     secure: true,
     service: 'gmail',
     auth:{
+        /* add your auth here for sending mail
         user:"chatify4@gmail.com",
-        pass:"fxqgsnxvsslsifag"
+        pass:"fxqgsnxvs"
+         */
     }
 })
 

@@ -1,6 +1,6 @@
 export const Input = ({ type, placeholder, reference }) => {
     return (
-        <div className="w-[70%]">
+        <div className="w-[100%]">
             <input
                 type={type}
                 placeholder={placeholder}
