@@ -27,7 +27,6 @@ export default function ChatApp() {
         console.log(message);
         if(message.type==="reply"){
             setMessages([...messages,{text:message.msg,sender:"not_me"}]);
-            console.log(messages);
         }
         else  if(message.type==="active") {
             if(message.msg==="user_not_online"){
