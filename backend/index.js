@@ -41,7 +41,6 @@ wss.on("connection", (ws) => {
                 if (!email) return;
                 ws.id = email.email;
                 onlineUsers.set(email.email, ws);
-                console.log(onlineUsers);
                 if(onlineUsers.has(data.toUserId)){
                     ws.send(JSON.stringify({type:"active",user:"online"}))
                 }
